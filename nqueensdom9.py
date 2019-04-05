@@ -1,6 +1,6 @@
 from ortools.constraint_solver import pywrapcp
 
-def dispay_solution(queens):
+def display_solution(queens):
     queen_columns = [int(queen.Value()) for queen in queens]
     for i in queen_columns:
         print(''.join(['⬛' if i==j else '⬜' for j in range(len(queens))]))
@@ -22,3 +22,10 @@ def n_queens(N=8):
 
     while solver.NextSolution():
         yield queens
+        
+        
+
+if __name__ == "__main__":
+    for solution in n_queens(8):
+        display_solution(solution)
+        print()

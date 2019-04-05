@@ -1,7 +1,7 @@
 from ortools.constraint_solver import pywrapcp
 from itertools import product
 
-def dispay_solution(cells):
+def display_solution(cells):
     for line in cells:
         for cell in line:
             print('⬛' if cell.Value()==1 else '⬜', end='')
@@ -49,3 +49,9 @@ def n_queens(N=8):
 
     while solver.NextSolution():
         yield cells
+
+
+if __name__ == "__main__":
+    for solution in n_queens(8):
+        display_solution(solution)
+        print()
