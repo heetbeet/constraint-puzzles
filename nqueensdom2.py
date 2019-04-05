@@ -16,6 +16,7 @@ def n_queens(N=8):
             cells[-1].append(solver.IntVar(0,1,'x(%d,%d)'%(i,j)))
             
     for i in range(N):
+        #solver.Sum not working
         exec("solver.Add(" + " + ".join("cells[i][%d]"%j for j in range(N)) + " == 1) ")
         exec("solver.Add(" + " + ".join("cells[%d][i]"%j for j in range(N)) + " == 1) ")
 

@@ -53,6 +53,7 @@ def sudoku(sudoku_cells):
             if sudoku_cells[i][j] == 0:
                 cells[-1].append(solver.IntVar(1,9,'x(%d,%d)'%(i,j)))
             else:
+                #reduce the domain to a single entry -- i.e. observe the cell
                 cells[-1].append(solver.IntVar(sudoku_cells[i][j],
                                                sudoku_cells[i][j],
                                                'x(%d,%d)'%(i,j)))
