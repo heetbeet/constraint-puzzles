@@ -12,19 +12,10 @@ def display_solution(cells_dict):
     for i in range(rows):
         for j in range(cols):
             if (i,j) not in cells_dict:
-                print('⬜', end='')
+                print('🔲', end='')
             else:
                 print('⬛' if cells_dict[i,j].Value()==1 else '⬜', end='')
         print(flush=True)
-
-
-'''
-def display_solution(cells):
-    for line in cells:
-        for cell in line:
-            print('⬛' if cell.Value()==1 else '⬜', end='')
-        print(flush=True)
-'''
 
 def get_clues(txt):
        
@@ -78,7 +69,6 @@ def fillapix(clues):
     solver.NewSearch(db)
 
     while solver.NextSolution():
-        print('yeeeeeeaaaaaaaaaah')
         yield(cells)
         
 if __name__ == "__main__":
