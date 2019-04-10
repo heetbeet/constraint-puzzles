@@ -30,6 +30,8 @@ def verify_solution(cells):
     return True
 
 def cells_from_txt(txt):
+    #strip comments
+    txt = '\n'.join(i.split('#')[0] for i in txt.split('\n')) 
     cells = []
     idx=0
     txt = txt.replace('.','0') 
@@ -44,7 +46,7 @@ def cells_from_txt(txt):
 
 def sudoku(sudoku_cells):
     N = 9
-    solver = pywrapcp.Solver('sudoku')
+    solver = pywrapcp.Solver(__file__)
 
     cells = []
     for i in range(N):
@@ -85,12 +87,15 @@ def sudoku(sudoku_cells):
         yield cells
 
 if __name__ == "__main__":
-    sudoku_txts = [line for line in open('puzzles/sudokus.txt').read().split('\n')
-                   if '.' in line and ';' in line]
+    import sys
+    if len(sys.argv)>=2:
+        sudoku_txts = [open(sys.argv[1]).read()]
+    else: 
+        sudoku_txts = [line for line in open('puzzles-misc/sudokus.txt').read().split('\n')
+                       if '.' in line and ';' in line]
     
     for txt in sudoku_txts:
-        print(txt)
+        if len(sudoku_txts)>1:
+            print('\n'+txt)
         for solution in sudoku((cells_from_txt(txt))):
             display_solution(solution)
-            print(verify_solution(solution))
-            print()

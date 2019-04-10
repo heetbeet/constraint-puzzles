@@ -1,114 +1,97 @@
 import xlrd
 from ortools.constraint_solver import pywrapcp
 from pprint import pprint
+import re
 
 def display_solution(cells):
     rows, cols = 0,0
     for (i,j), val in cells.items():
         if i+1 >= rows: rows = i+1
         if i+1 >= cols: cols = j+1
-        
+
     for i in range(rows):
         for j in range(cols):
-            if (i,j) in cells:
-                print(cells[i,j].Value(), end=' ')
-            else:
-                print(" ", end=' ')
-        print()
-    
-def load_sumsudoku(filename):
-    '''
-    Load special version of sudoku: http://krazydad.com/killersudoku/
-    '''
-    import xlrd
-    
-    #******************************************
-    #A helper function to sort out and label clusters concerning the same sum
-    def find_clusters(arr):
-        outarr = [[0 for i in range(9)] for i in range(9)]
-        outidx = [];
-        
-        def find_neighbours(iin,jin):
-            neighidx = [[iin-1,jin],[iin+1,jin],[iin,jin-1],[iin,jin+1]]
-            neighidx = [[i,j] for i,j in neighidx 
-                        if ( 0<=i and i<len(arr) and 0<=j and j<len(arr[0]))]
-            neighidx = [[i,j] for i,j in neighidx
-                        if (arr[iin][jin] == arr[i][j]) and outarr[i][j]==0]
-            return neighidx
-   
-        def add_sector(iin, jin):
-            current_labels = [[iin, jin]]
-            lidx = 0;
-            while(lidx < len(current_labels)):
-                #remove if added twice
-                if outarr[current_labels[lidx][0]][current_labels[lidx][1]]:
-                    current_labels.pop(lidx)
-                    lidx-=1
-                outarr[current_labels[lidx][0]][current_labels[lidx][1]] = len(outidx)+1
-                current_labels += find_neighbours(*current_labels[lidx])
-                lidx+=1;
-            outidx.append(current_labels)
-
-        #Recursive helper
-        for i in range(len(arr)):
-            for j in range(len(arr[0])):
-                if outarr[i][j] == 0:
-                    add_sector(i, j)
-                    
-        return outidx, outarr
-    
-    #*******************************************
-    #Load an .xls spreadsheet containing the sumsoduko information and return
-    #a list of sumvalues corresponding to sudoku indices (0-based [row, col])
-    def load_xls(filename):
-        if not filename.lower().endswith('xls'):
-            raise ValueError("load_sumsudoku uses file with the 90's Excel .xls "
-            "extension not .txt, .csv, or .xlsx. You gave "+str(filename))
+            print(cells[i,j].Value(),end=' ')
+            if (j+1)%3==0 and (j+1)!=9:
+                print('|', end=' ')
+        if (i+1)%3==0 and (i+1)!=9:
+            print('\n------+-------+------')
             
-        colarray = [[0 for i in range(9)] for i in range(9)]
-        valarray = [[0 for i in range(9)] for i in range(9)]
-        
-        book = xlrd.open_workbook(filename, formatting_info=True)
-        sheets = book.sheet_names()
-        sheet = book.sheet_by_index(0)
-        
-        rows, cols = sheet.nrows, sheet.ncols
-        for row in range(9):
-            for col in range(9):
-                thecell = sheet.cell(row, col)      
-                xfx = sheet.cell_xf_index(row, col)
-                xf = book.xf_list[xfx]
-                
-                colarray[row][col] = xf.background.pattern_colour_index            
+        else:
+            print()
     
-                try: int(thecell.value)
-                except: valarray[row][col] = 0
-                else:   valarray[row][col] = int(thecell.value)
-        return colarray, valarray
+def load_killersudoku(filename):
+    from itertools import product
+    str_in = open(filename).read()
+    lines = [i.split('#')[0].strip() for i in str_in.split('\n')]
+    lines = [i for i in lines if i]
+
+    lwdth = len(lines[0])
+    for i in lines:
+        if len(i)!=lwdth:
+            raise ValueError('Lines in killersudoku puzzle is not the same length:\n'+'\n'.join(lines))
     
-    colarray, valarray = load_xls(filename)
-    clusteridx, clusterarr = find_clusters(colarray)
-    
-    #Rearange clusteridx to [(sumvalue1, idxes1), (..,...)]
-    for i, idxes in enumerate(clusteridx):
-        sumval = 0;
-        for idx in idxes:
-            if valarray[idx[0]][idx[1]] != 0:
-                sumval = valarray[idx[0]][idx[1]]
-                break
-        if sumval == 0:
-            raise ValueError('No sumvalue for cluster indexes in .xls sheet:'
-                             +str(idxes)+'.')
-        if int(sumval) != sumval:
-            raise ValueError('Sumvalue must be a integer. You gave '+str(sumval)+'.')
-            
-        clusteridx[i] = (int(sumval), idxes)
-    
-    return clusteridx
+    #print('\n'.join(lines))
+    cellidx = {}
+    for i in range(9):
+        for j in range(9):
+            cellidx[i,j] = (i*2+1,j*4+1)
+
+    for i in range(9):
+        for j in range(9):
+            ii,jj = cellidx[i,j]
+
+    cageid  = {'cage'+str((i,j)):[(i,j)] for i in range(9) for j in range(9)}
+
+    def is_valid(i,j):
+        if i<0 or j<0 or i>=9 or j>=9:
+            return False
+        return True
+
+    def merge(idx0, idx1):
+        id0 = [id for id, cells in cageid.items() if idx0 in cells][0]
+        id1 = [id for id, cells in cageid.items() if idx1 in cells][0]
+
+        if id0!=id1:
+            cageid[id0] = cageid[id0]+cageid[id1]
+            cageid.pop(id1)
 
 
-def sumsudoku(cages):
-    solver = pywrapcp.Solver('fill-a-pix')
+    for i,j in product(range(9),range(9)):
+
+        ii,jj = cellidx[i,j]
+        if is_valid(i-1, j):
+            if len(lines[ii-1][jj:jj+3].replace(' ','')) != 3:
+                merge((i,j), (i-1,j))
+
+        if is_valid(i+1, j):
+            if len(lines[ii+1][jj:jj+3].replace(' ','')) != 3:
+                merge((i,j), (i+1,j))
+
+        if is_valid(i, j-1):
+            if lines[ii][jj-1] not in '|║':
+                merge((i,j), (i,j-1))
+
+        if is_valid(i, j+1):
+            if lines[ii][jj+3] not in '|║':
+                merge((i,j), (i,j+1))
+
+    cages = []
+    for i, cells in cageid.items():
+        cells.sort()
+        str_num = ""
+        for (i,j) in cells:
+            ii, jj = cellidx[i,j]
+            str_num = str_num + lines[ii][jj:jj+4]
+
+        num = int(re.findall(r'\d+', str_num)[0])
+        cages.append([num, cells])
+
+    return cages
+
+
+def killersudoku(cages):
+    solver = pywrapcp.Solver(__file__)
     cells = {}
 
     for i in range(9):
@@ -145,5 +128,11 @@ def sumsudoku(cages):
         yield(cells)
         
 if __name__ == "__main__":
-    for solution in sumsudoku(load_sumsudoku('puzzles/sumsudoku-hardest.xls')):
+    import sys
+    if len(sys.argv)>=2:
+        filename = sys.argv[1]
+    else: 
+        filename = 'gizmodo-10-hardest-puzzles/killersudoku-hardest.txt'
+        
+    for solution in killersudoku(load_killersudoku(filename)):
         display_solution(solution)

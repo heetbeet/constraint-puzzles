@@ -5,25 +5,22 @@ def display_solution(cells):
     for line in cells:
         for cell in line:
             print('⬛' if cell.Value()==1 else '⬜', end='')
-        print()
+        print(flush=True)
 
 
 def get_clues(txt):
-    def whitelist(line):
-        if set(i for i in line).difference(
-            set(i for i in '.0123456789')):
-            return False
-        return True
-        
-    lines = [i for i in txt.split('\n') if whitelist(i)]
+       
+    lines = [i.split('#')[0].strip() for i in txt.split('\n')]
     clues = []
     for line in lines:
+        if line == '': continue
+        print(line)
         clues.append([])
         for i in line:
             clues[-1].append(None if i=='.' else int(i))
     return clues
         
-def fillapix(clues)
+def fillapix(clues):
     solver = pywrapcp.Solver('fill-a-pix')
     cells = []
 
@@ -65,3 +62,13 @@ def fillapix(clues)
 
     while solver.NextSolution():
         yield(cells)
+        
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv)>=2:
+        filename = sys.argv[1]
+    else: 
+        filename = 'gizmodo-10-hardest-puzzles/fillapix-hardest.txt'
+    
+    for i in fillapix(get_clues(open(filename).read())):
+        display_solution(i)

@@ -6,42 +6,28 @@ def display_solution(cells):
     rows, cols = 0,0
     for (i,j), val in cells.items():
         if i+1 >= rows: rows = i+1
-        if i+1 >= cols: cols = j+1
+        if j+1 >= cols: cols = j+1
         
     for i in range(rows):
         for j in range(cols):
             if (i,j) in cells:
-                print(cells[i,j].Value(), end=' ')
+                print(cells[i,j].Value(), end=" ")
             else:
-                print(" ", end=' ')
+                print(".", end=' ')
         print()
 
 def load_kakuro(filename):
-    book = xlrd.open_workbook(filename, formatting_info=True)
-    sheets = book.sheet_names()
-    sheet = book.sheet_by_index(0)
-
-    rows, cols = sheet.nrows, sheet.ncols
-
-    print(rows, cols)
+    str_in = open(filename).read()
     
-    kaku_rc = []
-    for i in range(rows):
-        kaku_rc.append([])
-        for j in range(cols):
-            kaku_rc[-1].append(str(sheet.cell(i,j).value).strip())
-    l = 0
-    for line in kaku_rc:
-        for i, val in enumerate(line):
-            if val and str(val).strip()!="":
-                if i+1>=l:
-                    l=i+1
-    kaku_rc = [line[:l] for line in kaku_rc if sum([i!='' for i in line])]
-    pprint(kaku_rc)
-
+    lines = [i.split('#')[0].strip() for i in str_in.split('\n')]
+    cells = [[j.strip().replace('_','') for j in i.split('|')] 
+                                        for i in lines if '|' in i]
+    
+    cols = len(cells[0])
+    rows = len(cells)
+    
     cages = []
-
-    for i, line in enumerate(kaku_rc):
+    for i, line in enumerate(cells):
         for j, ijtxt in enumerate(line):
             if '\\' in ijtxt:
                 dwn = ijtxt.split('\\')[0].strip()
@@ -49,21 +35,21 @@ def load_kakuro(filename):
 
                 if dwn != '':
                     cages.append([int(dwn),[]])
-                    for ii in range(i+1,len(kaku_rc)):
-                        if kaku_rc[ii][j].strip()=='':
+                    for ii in range(i+1,len(cells)):
+                        if cells[ii][j].strip()=='':
                             cages[-1][-1].append((ii,j))
                         else: break
 
                 if rgt != '':
                     cages.append([int(rgt),[]])
                     for jj in range(j+1,len(line)):
-                        if kaku_rc[i][jj].strip()=='':
+                        if cells[i][jj].strip()=='':
                             cages[-1][-1].append((i,jj))
                         else: break
     return cages
 
 def kakuro(cages):
-    solver = pywrapcp.Solver('fill-a-pix')
+    solver = pywrapcp.Solver(__file__)
     cells = {}
 
     for i, (num, block) in enumerate(cages):
@@ -75,8 +61,9 @@ def kakuro(cages):
         #solver.Sum not working
         #solver.Add([solver.Sum(cells[i,j] for i,j in block]) == num)
         pycode = ("solver.Add(" + " + ".join("cells[%d,%d]"%(i,j) for i,j in block) + " == %d) "%num)
-        print(pycode, flush=1)
         exec(pycode)
+        
+        solver.Add(solver.AllDifferent([cells[i,j] for i,j in block]))
 
 
     cells_flat = [cells[i] for i in cells]
