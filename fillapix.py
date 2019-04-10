@@ -1,12 +1,30 @@
 from ortools.constraint_solver import pywrapcp
 from itertools import product
 
+
+def display_solution(cells_dict):
+    rows, cols = 0,0
+    for (i,j), val in cells_dict.items():
+        if i+1 >= rows: rows = i+1
+        if i+1 >= cols: cols = j+1
+    
+    
+    for i in range(rows):
+        for j in range(cols):
+            if (i,j) not in cells_dict:
+                print('⬜', end='')
+            else:
+                print('⬛' if cells_dict[i,j].Value()==1 else '⬜', end='')
+        print(flush=True)
+
+
+'''
 def display_solution(cells):
     for line in cells:
         for cell in line:
             print('⬛' if cell.Value()==1 else '⬜', end='')
         print(flush=True)
-
+'''
 
 def get_clues(txt):
        
@@ -14,7 +32,6 @@ def get_clues(txt):
     clues = []
     for line in lines:
         if line == '': continue
-        print(line)
         clues.append([])
         for i in line:
             clues[-1].append(None if i=='.' else int(i))
@@ -22,45 +39,46 @@ def get_clues(txt):
         
 def fillapix(clues):
     solver = pywrapcp.Solver('fill-a-pix')
-    cells = []
+    cells = {}
 
     rows, cols = len(clues), len(clues[0])
     for i in range(rows):
-        cells.append([])
         for j in range(cols):
-            cells[-1].append(solver.IntVar(0,1,'x(%d,%d)'%(i,j)))
+            cells[i,j] = solver.IntVar(0,1,'x(%d,%d)'%(i,j))
 
     def valid(i,j):
         if i<0 or j<0 or i>=rows or j>=cols:
             return False
         return True
 
+    ij_scope = set()
     for i in range(rows):
         for j in range(cols):
             block = [(i+ii,j+jj)
                     for ii in range(-1,2) for jj in range(-1,2)
                     if valid(i+ii,j+jj)]
-
+            
+            ij_scope.update(block)
             if clues[i][j] is not None:
                 #solver.Sum not working
                 #solver.Add(solver.Sum(cells[i][j] for i,j in block) == clue[i][j])
-                pycode = ("solver.Add(" + " + ".join("cells[%d][%d]"%(i,j) for i,j in block) + " == %d) "%clues[i][j])
+                pycode = ("solver.Add(" + " + ".join("cells[%d,%d]"%(i,j) for i,j in block) + " == %d) "%clues[i][j])
                 exec(pycode)
 
-
-    cells_flat = []
     for i in range(rows):
         for j in range(cols):
-            cells_flat.append(cells[i][j])
+            if (i,j) not in ij_scope:
+                cells.pop((i,j))
 
     db= solver.Phase(
-            cells_flat,
+            [cell for _, cell in cells.items()],
             solver.CHOOSE_MIN_SIZE_LOWEST_MAX,
             solver.ASSIGN_CENTER_VALUE
         )
     solver.NewSearch(db)
 
     while solver.NextSolution():
+        print('yeeeeeeaaaaaaaaaah')
         yield(cells)
         
 if __name__ == "__main__":
