@@ -43,8 +43,10 @@ config.rst
 package-lock.json
 geckodriver.log
 
-emdw_RandomEngine_seedVal.txt
-err.txt
+*emdw_RandomEngine_seedVal.txt
+*err.txt
+
+bin-purge-and-merge/bin
 
 scraper-ipynotebooks-grandgames.net/kakuronums.txt
 scraper-ipynotebooks-grandgames.net/nums.txt

@@ -1,0 +1,7 @@
+#!/bin/sh
+    PROGRAM_DIRECTORY="`dirname "$0"`"
+    export LD_LIBRARY_PATH="$PROGRAM_DIRECTORY"
+
+    #chmod +x "$PROGRAM_DIRECTORY/bin/eg_ksat"
+    "$PROGRAM_DIRECTORY/bin/eg_ksat" "$@"
+    
