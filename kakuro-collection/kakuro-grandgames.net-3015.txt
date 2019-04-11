@@ -1,3 +1,5 @@
+#source https://en.grandgames.net/kakuro/id3015
+
 .....|23\_ |12\_ | 7\_ 
 -----+-----+-----+-----
  _\19|     |     |     

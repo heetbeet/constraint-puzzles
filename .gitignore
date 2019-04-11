@@ -21,7 +21,7 @@ __pycache__
 *.egg-info
 *~
 *.bak
-Untitled.ipynb
+Untitled*.ipynb
 .ipynb_checkpoints
 .tox
 .DS_Store
@@ -47,6 +47,8 @@ geckodriver.log
 *err.txt
 
 bin-purge-and-merge/bin
+
+output/
 
 scraper-ipynotebooks-grandgames.net/kakuronums.txt
 scraper-ipynotebooks-grandgames.net/nums.txt
