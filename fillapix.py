@@ -2,6 +2,18 @@ from ortools.constraint_solver import pywrapcp
 from itertools import product
 
 
+import time
+from contextlib import contextmanager
+
+@contextmanager
+def timeme(message = "Took "):
+    try:
+        a = time.time()
+        yield None
+    finally:
+        print(message+str(time.time()-a)+'s')
+        
+
 def display_solution(cells_dict):
     rows, cols = 0,0
     for (i,j), val in cells_dict.items():
@@ -29,47 +41,49 @@ def get_clues(txt):
     return clues
         
 def fillapix(clues):
-    solver = pywrapcp.Solver('fill-a-pix')
-    cells = {}
+    with timeme('Setup time:'):
+        solver = pywrapcp.Solver('fill-a-pix')
+        cells = {}
 
-    rows, cols = len(clues), len(clues[0])
-    for i in range(rows):
-        for j in range(cols):
-            cells[i,j] = solver.IntVar(0,1,'x(%d,%d)'%(i,j))
+        rows, cols = len(clues), len(clues[0])
+        for i in range(rows):
+            for j in range(cols):
+                cells[i,j] = solver.IntVar(0,1,'x(%d,%d)'%(i,j))
 
-    def valid(i,j):
-        if i<0 or j<0 or i>=rows or j>=cols:
-            return False
-        return True
+        def valid(i,j):
+            if i<0 or j<0 or i>=rows or j>=cols:
+                return False
+            return True
 
-    ij_scope = set()
-    for i in range(rows):
-        for j in range(cols):
-            block = [(i+ii,j+jj)
-                    for ii in range(-1,2) for jj in range(-1,2)
-                    if valid(i+ii,j+jj)]
-            
-            ij_scope.update(block)
-            if clues[i][j] is not None:
-                #solver.Sum not working
-                #solver.Add(solver.Sum(cells[i][j] for i,j in block) == clue[i][j])
-                pycode = ("solver.Add(" + " + ".join("cells[%d,%d]"%(i,j) for i,j in block) + " == %d) "%clues[i][j])
-                exec(pycode)
+        ij_scope = set()
+        for i in range(rows):
+            for j in range(cols):
+                block = [(i+ii,j+jj)
+                        for ii in range(-1,2) for jj in range(-1,2)
+                        if valid(i+ii,j+jj)]
 
-    for i in range(rows):
-        for j in range(cols):
-            if (i,j) not in ij_scope:
-                cells.pop((i,j))
+                ij_scope.update(block)
+                if clues[i][j] is not None:
+                    #solver.Sum not working
+                    #solver.Add(solver.Sum(cells[i][j] for i,j in block) == clue[i][j])
+                    pycode = ("solver.Add(" + " + ".join("cells[%d,%d]"%(i,j) for i,j in block) + " == %d) "%clues[i][j])
+                    exec(pycode)
 
-    db= solver.Phase(
-            [cell for _, cell in cells.items()],
-            solver.CHOOSE_MIN_SIZE_LOWEST_MAX,
-            solver.ASSIGN_CENTER_VALUE
-        )
-    solver.NewSearch(db)
+        for i in range(rows):
+            for j in range(cols):
+                if (i,j) not in ij_scope:
+                    cells.pop((i,j))
 
-    while solver.NextSolution():
-        yield(cells)
+        db= solver.Phase(
+                [cell for _, cell in cells.items()],
+                solver.CHOOSE_MIN_SIZE_LOWEST_MAX,
+                solver.ASSIGN_CENTER_VALUE
+            )
+        solver.NewSearch(db)
+
+    with timeme('Sover time:'):
+        while solver.NextSolution():
+            yield(cells)
         
 if __name__ == "__main__":
     import sys
