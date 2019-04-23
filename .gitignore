@@ -50,5 +50,8 @@ bin-purge-and-merge/bin
 
 output/
 
-scraper-ipynotebooks-grandgames.net/kakuronums.txt
-scraper-ipynotebooks-grandgames.net/nums.txt
+webscraper-ipynotebooks/kakuronums.txt
+webscraper-ipynotebooks/nums.txt
+webscraper-ipynotebooks/fillapixnums.txt
+webscraper-ipynotebooks/KRProject_1.zip
+webscraper-ipynotebooks/KRProject_1/
