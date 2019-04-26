@@ -1,5 +1,6 @@
 from ortools.constraint_solver import pywrapcp
 from itertools import product
+from misc import timeme
 
 def display_solution(cells):
     for i, line in enumerate(cells):
@@ -45,46 +46,48 @@ def cells_from_txt(txt):
     return cells
 
 def sudoku(sudoku_cells):
-    N = 9
-    solver = pywrapcp.Solver(__file__)
+    with timeme("Setup time:"):
+        N = 9
+        solver = pywrapcp.Solver(__file__)
 
-    cells = []
-    for i in range(N):
-        cells.append([])
-        for j in range(N):
-            if sudoku_cells[i][j] == 0:
-                cells[-1].append(solver.IntVar(1,9,'x(%d,%d)'%(i,j)))
-            else:
-                #reduce the domain to a single entry -- i.e. observe the cell
-                cells[-1].append(solver.IntVar(sudoku_cells[i][j],
-                                               sudoku_cells[i][j],
-                                               'x(%d,%d)'%(i,j)))
+        cells = []
+        for i in range(N):
+            cells.append([])
+            for j in range(N):
+                if sudoku_cells[i][j] == 0:
+                    cells[-1].append(solver.IntVar(1,9,'x(%d,%d)'%(i,j)))
+                else:
+                    #reduce the domain to a single entry -- i.e. observe the cell
+                    cells[-1].append(solver.IntVar(sudoku_cells[i][j],
+                                                   sudoku_cells[i][j],
+                                                   'x(%d,%d)'%(i,j)))
 
-    #rows and cols
-    for i in range(N):
-        solver.Add(solver.AllDifferent(cells[i]))
-        solver.Add(solver.AllDifferent([cells[j][i] for j in range(N)]))
+        #rows and cols
+        for i in range(N):
+            solver.Add(solver.AllDifferent(cells[i]))
+            solver.Add(solver.AllDifferent([cells[j][i] for j in range(N)]))
 
-    #blocks
-    for i in range(0,9,3):
-        for j in range(0,9,3):
-            solver.Add(solver.AllDifferent([cells[i+ii][j+jj] 
-                                 for ii in range(3) for jj in range(3)]))
+        #blocks
+        for i in range(0,9,3):
+            for j in range(0,9,3):
+                solver.Add(solver.AllDifferent([cells[i+ii][j+jj] 
+                                     for ii in range(3) for jj in range(3)]))
 
-    cells_flat = []
-    for i in range(N):
-        for j in range(N):
-            cells_flat.append(cells[i][j])
+        cells_flat = []
+        for i in range(N):
+            for j in range(N):
+                cells_flat.append(cells[i][j])
 
-    db= solver.Phase(
-            cells_flat,
-            solver.CHOOSE_MIN_SIZE_LOWEST_MAX,
-            solver.ASSIGN_CENTER_VALUE
-        )
-    solver.NewSearch(db)
-
-    while solver.NextSolution():
-        yield cells
+        db= solver.Phase(
+                cells_flat,
+                solver.CHOOSE_MIN_SIZE_LOWEST_MAX,
+                solver.ASSIGN_CENTER_VALUE
+            )
+        solver.NewSearch(db)
+        
+    with timeme("Solver time:"):
+        while solver.NextSolution():
+            yield cells
 
 if __name__ == "__main__":
     import sys

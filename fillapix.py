@@ -1,18 +1,6 @@
 from ortools.constraint_solver import pywrapcp
 from itertools import product
-
-
-import time
-from contextlib import contextmanager
-
-@contextmanager
-def timeme(message = "Took "):
-    try:
-        a = time.time()
-        yield None
-    finally:
-        print(message+str(time.time()-a)+'s')
-        
+from misc import timeme
 
 def display_solution(cells_dict):
     rows, cols = 0,0
