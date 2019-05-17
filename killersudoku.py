@@ -2,6 +2,7 @@ import xlrd
 from ortools.constraint_solver import pywrapcp
 from pprint import pprint
 import re
+from misc import timeme
 
 def display_solution(cells):
     rows, cols = 0,0
@@ -91,41 +92,43 @@ def load_killersudoku(filename):
 
 
 def killersudoku(cages):
-    solver = pywrapcp.Solver(__file__)
-    cells = {}
+    with timeme('Setup time:'):
+        solver = pywrapcp.Solver(__file__)
+        cells = {}
 
-    for i in range(9):
-        for j in range(9):
-            cells[i,j] = solver.IntVar(1,9,'x(%d,%d)'%(i,j))
+        for i in range(9):
+            for j in range(9):
+                cells[i,j] = solver.IntVar(1,9,'x(%d,%d)'%(i,j))
 
-    for i, (num, block) in enumerate(cages):
+        for i, (num, block) in enumerate(cages):
+
+            #solver.Sum not working
+            pycode = ("solver.Add(" + " + ".join("cells[%d,%d]"%(i,j) for i,j in block)+
+                                  " == %d)"%num)
+            exec(pycode)
+
+        #rows and cols
+        for i in range(9):
+            solver.Add(solver.AllDifferent([cells[i,j] for j in range(9)]))
+            solver.Add(solver.AllDifferent([cells[j,i] for j in range(9)]))
+
+        #blocks
+        for i in range(0,9,3):
+            for j in range(0,9,3):
+                solver.Add(solver.AllDifferent([cells[i+ii,j+jj] 
+                                     for ii in range(3) for jj in range(3)]))
+
+        cells_flat = [cells[i] for i in cells]
+        db= solver.Phase(
+                cells_flat,
+                solver.CHOOSE_MIN_SIZE_LOWEST_MAX,
+                solver.ASSIGN_CENTER_VALUE
+            )
+        solver.NewSearch(db)
         
-        #solver.Sum not working
-        pycode = ("solver.Add(" + " + ".join("cells[%d,%d]"%(i,j) for i,j in block)+
-                              " == %d)"%num)
-        exec(pycode)
-
-    #rows and cols
-    for i in range(9):
-        solver.Add(solver.AllDifferent([cells[i,j] for j in range(9)]))
-        solver.Add(solver.AllDifferent([cells[j,i] for j in range(9)]))
-
-    #blocks
-    for i in range(0,9,3):
-        for j in range(0,9,3):
-            solver.Add(solver.AllDifferent([cells[i+ii,j+jj] 
-                                 for ii in range(3) for jj in range(3)]))
-
-    cells_flat = [cells[i] for i in cells]
-    db= solver.Phase(
-            cells_flat,
-            solver.CHOOSE_MIN_SIZE_LOWEST_MAX,
-            solver.ASSIGN_CENTER_VALUE
-        )
-    solver.NewSearch(db)
-
-    while solver.NextSolution():
-        yield(cells)
+    with timeme('Solver time:'):
+        while solver.NextSolution():
+            yield(cells)
         
 if __name__ == "__main__":
     import sys

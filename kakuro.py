@@ -1,6 +1,7 @@
 import xlrd
 from ortools.constraint_solver import pywrapcp
 from pprint import pprint
+from misc import timeme
 
 def display_solution(cells):
     rows, cols = 0,0
@@ -49,30 +50,32 @@ def load_kakuro(filename):
     return cages
 
 def kakuro(cages):
-    solver = pywrapcp.Solver(__file__)
-    cells = {}
+    with timeme('Setup time:'):
+        solver = pywrapcp.Solver(__file__)
+        cells = {}
 
-    for i, (num, block) in enumerate(cages):
-        for i,j in block:
-            cells[i,j] = solver.IntVar(1,9,'x(%d,%d)'%(i,j))
+        for i, (num, block) in enumerate(cages):
+            for i,j in block:
+                cells[i,j] = solver.IntVar(1,9,'x(%d,%d)'%(i,j))
 
-    for i, (num, block) in enumerate(cages):
-        
-        #solver.Sum not working
-        #solver.Add([solver.Sum(cells[i,j] for i,j in block]) == num)
-        pycode = ("solver.Add(" + " + ".join("cells[%d,%d]"%(i,j) for i,j in block) + " == %d) "%num)
-        exec(pycode)
-        
-        solver.Add(solver.AllDifferent([cells[i,j] for i,j in block]))
+        for i, (num, block) in enumerate(cages):
+
+            #solver.Sum not working
+            #solver.Add([solver.Sum(cells[i,j] for i,j in block]) == num)
+            pycode = ("solver.Add(" + " + ".join("cells[%d,%d]"%(i,j) for i,j in block) + " == %d) "%num)
+            exec(pycode)
+
+            solver.Add(solver.AllDifferent([cells[i,j] for i,j in block]))
 
 
-    cells_flat = [cells[i] for i in cells]
-    db= solver.Phase(
-            cells_flat,
-            solver.CHOOSE_MIN_SIZE_LOWEST_MAX,
-            solver.ASSIGN_CENTER_VALUE
-        )
-    solver.NewSearch(db)
-
-    while solver.NextSolution():
-        yield(cells)
+        cells_flat = [cells[i] for i in cells]
+        db= solver.Phase(
+                cells_flat,
+                solver.CHOOSE_MIN_SIZE_LOWEST_MAX,
+                solver.ASSIGN_CENTER_VALUE
+            )
+        solver.NewSearch(db)
+    
+    with timeme('Solver time:'):
+        while solver.NextSolution():
+            yield(cells)

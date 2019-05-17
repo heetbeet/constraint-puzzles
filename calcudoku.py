@@ -3,6 +3,7 @@ import numpy as np
 from ortools.constraint_solver import pywrapcp
 from pprint import pprint
 import re
+from misc import timeme:
 
 def display_solution(cells):
     rows, cols = 0,0
@@ -98,47 +99,49 @@ def load_calcudoku(filename):
 
 
 def calcudoku(cages, N):
-    solver = pywrapcp.Solver(__file__)
-    cells = {}
+    with timeme('Setup time:'):
+        solver = pywrapcp.Solver(__file__)
+        cells = {}
 
-    for i in range(N):
-        for j in range(N):
-            cells[i,j] = solver.IntVar(1,N,'x(%d,%d)'%(i,j))
+        for i in range(N):
+            for j in range(N):
+                cells[i,j] = solver.IntVar(1,N,'x(%d,%d)'%(i,j))
 
-    def is_int(txt):
-        try: 
-            int(txt)
-            return True
-        except:
-            return False
+        def is_int(txt):
+            try: 
+                int(txt)
+                return True
+            except:
+                return False
 
-    for i, ((num,op), block) in enumerate(cages):
-        
-        if op=='/' or op=='-':
-            pycode = ("solver.Add((" + op.join("cells[%d,%d]"%(i,j) for i,j in block      )+" == %d)"%num + ' or '
-                                 '(' + op.join("cells[%d,%d]"%(i,j) for i,j in block[::-1])+" == %d))"%num 
-                     )
-        else:
-            pycode = ("solver.Add(" + op.join("cells[%d,%d]"%(i,j) for i,j in block)+
-                                  " == %d)"%num)
-        exec(pycode)
+        for i, ((num,op), block) in enumerate(cages):
 
-    #rows and cols
-    for i in range(N):
-        solver.Add(solver.AllDifferent([cells[i,j] for j in range(N)]))
-        solver.Add(solver.AllDifferent([cells[j,i] for j in range(N)]))
+            if op=='/' or op=='-':
+                pycode = ("solver.Add((" + op.join("cells[%d,%d]"%(i,j) for i,j in block      )+" == %d)"%num + ' or '
+                                     '(' + op.join("cells[%d,%d]"%(i,j) for i,j in block[::-1])+" == %d))"%num 
+                         )
+            else:
+                pycode = ("solver.Add(" + op.join("cells[%d,%d]"%(i,j) for i,j in block)+
+                                      " == %d)"%num)
+            exec(pycode)
+
+        #rows and cols
+        for i in range(N):
+            solver.Add(solver.AllDifferent([cells[i,j] for j in range(N)]))
+            solver.Add(solver.AllDifferent([cells[j,i] for j in range(N)]))
 
 
-    cells_flat = [cells[i] for i in cells]
-    db= solver.Phase(
-            cells_flat,
-            solver.CHOOSE_MIN_SIZE_LOWEST_MAX,
-            solver.ASSIGN_CENTER_VALUE
-        )
-    solver.NewSearch(db)
+        cells_flat = [cells[i] for i in cells]
+        db= solver.Phase(
+                cells_flat,
+                solver.CHOOSE_MIN_SIZE_LOWEST_MAX,
+                solver.ASSIGN_CENTER_VALUE
+            )
+        solver.NewSearch(db)
 
-    while solver.NextSolution():
-        yield cells
+    with timeme('Solver time:'):
+        while solver.NextSolution():
+            yield cells
 
 if __name__ == "__main__":
     import sys

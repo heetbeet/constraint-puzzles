@@ -1,7 +1,6 @@
 #!/bin/sh
-    PROGRAM_DIRECTORY="`dirname "$0"`"
-    export LD_LIBRARY_PATH="$PROGRAM_DIRECTORY"
+PROGRAM_DIRECTORY="`dirname "$0"`"
+export LD_LIBRARY_PATH="$PROGRAM_DIRECTORY/bin"
 
-    #chmod +x "$PROGRAM_DIRECTORY/bin/eg_ksat"
-    "$PROGRAM_DIRECTORY/bin/eg_ksat" "$@"
-    
+#chmod +x "$PROGRAM_DIRECTORY//home/simon/devel/constraint-puzzles/bin-purge-and-merge/bin/eg_ksat"
+"$PROGRAM_DIRECTORY//home/simon/devel/constraint-puzzles/bin-purge-and-merge/bin/eg_ksat" "$@"

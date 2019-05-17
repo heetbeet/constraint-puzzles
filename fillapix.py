@@ -69,7 +69,7 @@ def fillapix(clues):
             )
         solver.NewSearch(db)
 
-    with timeme('Sover time:'):
+    with timeme('Solver time:'):
         while solver.NextSolution():
             yield(cells)
         
