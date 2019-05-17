@@ -23,7 +23,6 @@ binwrap_template = r'''#!/bin/sh
 PROGRAM_DIRECTORY="`dirname "$0"`"
 export LD_LIBRARY_PATH="$PROGRAM_DIRECTORY/bin"
 
-#chmod +x "$PROGRAM_DIRECTORY/%s"
 "$PROGRAM_DIRECTORY/%s" "$@"
 '''
 
@@ -34,7 +33,7 @@ def make_runner(src, dst, do_ln=False):
     cp(src, blob_path, do_ln=do_ln)
 
     with open(dst, 'w') as f:
-        f.write(binwrap_template%(blob_path, blob_path))
+        f.write(binwrap_template%(blob_path))
 
     #make dest wrapper executable
     subprocess.call(['chmod', '+x', dst])
