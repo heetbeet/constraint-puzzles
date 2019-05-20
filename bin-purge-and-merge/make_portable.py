@@ -33,7 +33,7 @@ def make_runner(src, dst, do_ln=False):
     cp(src, blob_path, do_ln=do_ln)
 
     with open(dst, 'w') as f:
-        f.write(binwrap_template%(blob_path))
+        f.write(binwrap_template%('bin/'+wrap_name))
 
     #make dest wrapper executable
     subprocess.call(['chmod', '+x', dst])
