@@ -19,11 +19,34 @@ import errno
 import click
 import shutil
 
-binwrap_template = r'''#!/bin/sh
-PROGRAM_DIRECTORY="`dirname "$0"`"
-export LD_LIBRARY_PATH="$PROGRAM_DIRECTORY/bin"
+binwrap_template = r'''#!/bin/bash
 
-"$PROGRAM_DIRECTORY/%s" "$@"
+#--------------------------------------------------
+# I might be a symlink, so here is my root dwelling
+#--------------------------------------------------
+
+#From https://stackoverflow.com/a/246128
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" 
+done
+DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+
+#--------------------------------------------------
+# Hey linker, also look here for .so files
+#--------------------------------------------------
+
+#From https://stackoverflow.com/a/37558191
+export LD_LIBRARY_PATH=$DIR/bin:$LD_LIBRARY_PATH
+
+#--------------------------------------------------
+# Finally, hey Linux, run this binary please
+#--------------------------------------------------
+
+"$DIR/bin/%s" "$@"
 '''
 
 def make_runner(src, dst, do_ln=False):
@@ -33,7 +56,7 @@ def make_runner(src, dst, do_ln=False):
     cp(src, blob_path, do_ln=do_ln)
 
     with open(dst, 'w') as f:
-        f.write(binwrap_template%('bin/'+wrap_name))
+        f.write(binwrap_template%(wrap_name))
 
     #make dest wrapper executable
     subprocess.call(['chmod', '+x', dst])
