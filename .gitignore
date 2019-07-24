@@ -21,7 +21,6 @@ __pycache__
 *.egg-info
 *~
 *.bak
-*runner.ipynb
 Untitled*.ipynb
 .ipynb_checkpoints
 .tox
