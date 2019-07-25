@@ -25,4 +25,4 @@ export LD_LIBRARY_PATH=$DIR/bin:$LD_LIBRARY_PATH
 # Finally, hey Linux, run this binary please
 #--------------------------------------------------
 
-"$DIR/bin/eg_ksat" "$@"
+"$DIR/bin/run_purge_and_merge" "$@"
