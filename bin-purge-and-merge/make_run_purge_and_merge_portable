@@ -1,3 +1,3 @@
 #!/bin/bash
 dir=$(cd -P -- "$(dirname -- "$0")" && pwd -P)
-python make_portable.py /home/simon/devel/eg_emdw/cmake-build-debug/src/run_purge_and_merge ./run_purge_and_merge -l ../../emdw/build/src/libemdw.so -l ../../gLinear/build/Linux-Release-x86_64/libgLinear.so -l ../../patrecII/build/Linux-Release-x86_64/lib/libpatrecII.so -s 
+python make_portable.py /home/simon/devel/purge_and_merge/cmake-build-debug/src/run_purge_and_merge ./run_purge_and_merge -l ../../emdw/build/src/libemdw.so -l ../../gLinear/build/Linux-Release-x86_64/libgLinear.so -l ../../patrecII/build/Linux-Release-x86_64/lib/libpatrecII.so -s 
